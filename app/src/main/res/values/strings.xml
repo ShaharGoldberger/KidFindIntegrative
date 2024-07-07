@@ -1,0 +1,16 @@
+<resources>
+    <string name="title">Memory Game</string>
+    <string name="welcome">Welcome</string>
+    <string name="enter_name">Enter Name</string>
+    <string name="enter_email">Enter Email</string>
+    <string name="name">Name</string>
+    <string name="email">Email</string>
+    <string name="app_name">ChoresAndShop</string>
+    <string name="title_home">Home</string>
+    <string name="title_dashboard">Dashboard</string>
+    <string name="title_notifications">Notifications</string>
+    <string name="price">Price</string>
+    <string name="enter_price">Enter Price</string>
+    <string name="alert_parent">Alert Parent</string>
+    <string name="title_kid_find">Kid Find</string>
+</resources>

@@ -1,14 +1,26 @@
 package com.example.choresandshop.ui.kidfind;
 
+import static androidx.core.content.ContextCompat.getSystemService;
+
 import android.app.Activity;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.media.MediaPlayer;
+import android.os.Build;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+
+import android.os.Handler;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,15 +29,19 @@ import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import com.example.choresandshop.Model.CreatedBy;
+import com.example.choresandshop.Model.UserId;
 import com.example.choresandshop.R;
 import com.example.choresandshop.UserApi.ApiController;
 import com.example.choresandshop.UserApi.ObjectApi;
 import com.example.choresandshop.boundaries.ObjectBoundary;
+import com.example.choresandshop.ui.CurrentUserManager;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.material.button.MaterialButton;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import com.google.android.gms.maps.GoogleMap;
@@ -37,15 +53,28 @@ import android.util.Log;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+import retrofit2.http.Body;
+import retrofit2.http.Path;
+import retrofit2.http.Query;
 
 public class KidFindFragmentParent extends Fragment implements OnMapReadyCallback{
 
     private MaterialButton Find_MB_FindLocation;
+    private Spinner spinner;
     private GoogleMap googleMap;
     private android.location.LocationManager location;
     private double latitude;
     private double longitude;
     private String email;
+    private Handler handler = new Handler();
+    private Runnable runnable;
+
+    private ObjectApi objectApi;
+    private final int POLL_INTERVAL = 5000; // time in millis
+    private MediaPlayer mediaPlayer;
+
+
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -57,9 +86,16 @@ public class KidFindFragmentParent extends Fragment implements OnMapReadyCallbac
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_kid_find_parent, container, false);
-        // Get reference to the Spinner
-        Spinner spinner = view.findViewById(R.id.spinner);
 
+        objectApi = ApiController.getRetrofitInstance().create(ObjectApi.class);
+
+        findViews(view);
+        initViews(view);
+        startPolling();
+        return view;
+    }
+
+    private void initViews(View view) {
         // Create a list of items
         List<String> kidsNames = new ArrayList<>();
         kidsNames.add("Shahar@gmail.com");
@@ -87,42 +123,19 @@ public class KidFindFragmentParent extends Fragment implements OnMapReadyCallbac
             }
         });
 
-        findViews(view);
-
         Find_MB_FindLocation.setOnClickListener(v -> {
-            testLocation();
+            findKidLocation();
         });
 
         SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map_fragment);
         mapFragment.getMapAsync(this);
 
-        location = (android.location.LocationManager) getContext().getSystemService(getContext().LOCATION_SERVICE);
 
-        String coarse = "android.permission.ACCESS_COARSE_LOCATION";
-        String fine = "android.permission.ACCESS_FINE_LOCATION";
-        if (ContextCompat.checkSelfPermission(getContext(), coarse) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions((Activity) getContext(), new String[]{coarse}, 101);
-        }
-        if (ContextCompat.checkSelfPermission(getContext(), fine) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions((Activity) getContext(), new String[]{fine}, 102);
-        }
-        Location locNew = location.getLastKnownLocation(android.location.LocationManager.GPS_PROVIDER);
-
-        if (locNew != null) {
-            this.latitude = locNew.getLatitude();
-            this.longitude = locNew.getLongitude();
-
-            System.out.println("LATITUDE: " + locNew.getLatitude());
-            System.out.println("LONGITUDE: " + locNew.getLongitude());
-        } else {
-            this.latitude = 0.0;
-            this.longitude = 0.0;
-            System.out.println("LOCATION IS NULL, 0,0 values given");
-        }
-        return view;
     }
+
     private void findViews(View view) {
         Find_MB_FindLocation = view.findViewById(R.id.Find_MB_FindLocation);
+        spinner = view.findViewById(R.id.spinner);
     }
 
 
@@ -135,11 +148,135 @@ public class KidFindFragmentParent extends Fragment implements OnMapReadyCallbac
         this.googleMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
     }
 
-    private void testLocation(){
-        Toast.makeText(getContext(), "Finding test", Toast.LENGTH_SHORT).show();
-        // TODO : Send the kid email to miniapp KidFind and get location boundary
-        ObjectApi apiService = ApiController.getRetrofitInstance().create(ObjectApi.class);
-        Call<ObjectBoundary[]> call = apiService.findAllObjects("MiniHeros", email.toLowerCase(), 1000, 0);
+    private void startPolling() {
+
+        runnable = () -> objectApi.getObjectsByType("ALERT",
+                "MiniHeros",
+                "Yakir@gmail.com",
+                10,
+                0).enqueue(new Callback<ObjectBoundary[]>() {
+            @Override
+            public void onResponse(Call<ObjectBoundary[]> call, Response<ObjectBoundary[]> response) {
+                if (response.isSuccessful()){
+                    // if any is active
+                    ArrayList<ObjectBoundary> objects = new ArrayList<>(Arrays.asList(response.body()));
+                    Log.e("Parent Objects", "Successful result" + objects.get(0));
+
+                    for (ObjectBoundary object : objects) {
+                        if (!object.getActive()) continue;
+                        Log.e("Notification", "Send notification " + objects.get(0));
+                        makeObjectNotActive(object);
+                        showNotification("Emergency call from " + object.getCreatedBy().getUserId().getEmail());
+                        Toast.makeText(getActivity(), "Emergency call from " + object.getCreatedBy().getUserId().getEmail(), Toast.LENGTH_SHORT).show();
+                        playSound(getContext());
+                        vibrate();
+                    }
+                }
+                else
+                    Log.e("Error", "Request failed with code: " + response.code());
+
+                handler.postDelayed(runnable, POLL_INTERVAL);
+            }
+            @Override
+            public void onFailure(Call<ObjectBoundary[]> call, Throwable t) {
+                Log.e("Failure", t.getMessage());
+                handler.postDelayed(runnable, POLL_INTERVAL);
+            }
+        });
+        handler.post(runnable);
+    }
+
+    private void makeObjectNotActive(ObjectBoundary boundary){
+//        boundary.setActive(Boolean.valueOf(Boolean.FALSE));
+        ObjectBoundary newBoundary = copyBoundary(boundary);
+        newBoundary.setActive(Boolean.FALSE);
+        Call<Void> call = objectApi.updateObject("MiniHeros", boundary.getObjectId().getId(), "MiniHeros", "yakir@gmail.com", newBoundary);
+        call.enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    try {
+                        Log.d("Update Object Boundary", "Yay we updated to read!");
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    Log.e("Update Error", "Request failed with code: " + response.code() + response.message() + response.toString()
+                    );
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                Toast.makeText(getContext(), "Finding test"+ t.getMessage(), Toast.LENGTH_SHORT).show();
+
+                Log.e("Update failed", t.getMessage());
+            }
+        });
+
+    }
+
+    private ObjectBoundary copyBoundary(ObjectBoundary boundary) {
+
+        ObjectBoundary newBoundary = new ObjectBoundary();
+        newBoundary.setType(
+                boundary.getType()
+        );
+        newBoundary.setAlias(
+                boundary.getAlias()
+        );
+        newBoundary.setLocation(new com.example.choresandshop.Model.Location(
+                boundary.getLocation().getLat(),
+                boundary.getLocation().getLng()
+        ));
+        newBoundary.setActive(
+                boundary.getActive()
+        );
+        newBoundary.setCreatedBy(new CreatedBy(new UserId(
+                boundary.getCreatedBy().getUserId().getSuperapp(),
+                boundary.getCreatedBy().getUserId().getEmail()
+        )));
+
+        return newBoundary;
+    }
+
+    private void showNotification(String message) {
+        NotificationManager notificationManager = (NotificationManager) getContext().getSystemService(getContext().NOTIFICATION_SERVICE);
+
+        // Create the notification channel if necessary
+        createNotificationChannel();
+
+        // Build the notification
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(getContext(), "EmergencyButton")
+                .setContentTitle("Mini Heros - Emergency Alert ")
+                .setSmallIcon(R.drawable.ic_location_black_24dp) // Replace with your app's icon
+                .setContentText(message)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setAutoCancel(true); // Dismiss the notification when the user taps on it
+
+        // Show the notification
+        notificationManager.notify(1, builder.build());
+    }
+
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            String channelId = "EmergencyButton";
+            String channelName = "EmergencyButtonAlert";
+            String channelDescription = "Emergency alert from kid";
+            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+
+            NotificationChannel channel = new NotificationChannel(channelId, channelName, importance);
+            channel.setDescription(channelDescription);
+
+            NotificationManager notificationManager = getContext().getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
+    }
+
+
+    private void findKidLocation(){
+
+        Call<ObjectBoundary[]> call = objectApi.findAllObjects("MiniHeros", email.toLowerCase(), 20, 0);
         call.enqueue(new Callback<ObjectBoundary[]>() {
             @Override
             public void onResponse(Call<ObjectBoundary[]> call, Response<ObjectBoundary[]> response) {
@@ -149,10 +286,9 @@ public class KidFindFragmentParent extends Fragment implements OnMapReadyCallbac
                         // Log or display the response
                         ObjectBoundary responseBody = responseAllBody[0];
                         LatLng location = new LatLng(responseBody.getLocation().getLat(), responseBody.getLocation().getLng());
-                        googleMap.addMarker(new MarkerOptions().position(location).title("Marker in Sydney"));
+                        googleMap.addMarker(new MarkerOptions().position(location).title(email.toLowerCase()));
                         googleMap.getUiSettings().setZoomControlsEnabled(true);
 
-                        // Set initial zoom level
                         float zoomLevel = 10.0f; // Example zoom level
                         googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, zoomLevel));
 
@@ -174,6 +310,48 @@ public class KidFindFragmentParent extends Fragment implements OnMapReadyCallbac
                 Log.e("LoginFailure", t.getMessage());
             }
         });
+
+    }
+    // Method to play sound from the raw folder
+    public void playSound(Context context) {
+        if (mediaPlayer != null) {
+            mediaPlayer.release(); // Release any resources from previous MediaPlayer
+        }
+
+        // Create a MediaPlayer instance and set the audio resource
+        mediaPlayer = MediaPlayer.create(context, R.raw.ring);
+
+        if (mediaPlayer != null) {
+            mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                @Override
+                public void onCompletion(MediaPlayer mp) {
+                    // Release the MediaPlayer once the audio is finished
+                    mp.release();
+                }
+            });
+
+            mediaPlayer.start(); // Start playing the sound
+        }
+    }
+
+    private void vibrate(){
+        Vibrator vibrate = (Vibrator) getContext().getSystemService(Context.VIBRATOR_SERVICE);
+        if (vibrate != null) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                // Create a vibration effect with a specific pattern
+                // Pattern: Wait 0ms, Vibrate for 500ms, Wait 1000ms, Vibrate for 1000ms
+                long[] mVibratePattern = new long[]{0, 500, 1000, 1000};
+                int[] mAmplitudes = new int[]{0, 150, 0, 200};  // Amplitude 0 for off, or 1-255 for on
+
+                VibrationEffect effect = VibrationEffect.createWaveform(mVibratePattern, mAmplitudes, -1);
+                vibrate.vibrate(effect);
+            } else {
+                // Deprecated in API 26
+                long[] pattern = {0, 100, 1000, 300};
+                vibrate.vibrate(pattern, -1);  // The '-1' here means to vibrate once, as '0' would make it vibrate repeatedly.
+            }
+        }
+
 
     }
 

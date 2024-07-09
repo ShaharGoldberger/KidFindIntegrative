@@ -45,7 +45,6 @@
         android:layout_marginHorizontal="32dp"
         android:layout_marginTop="16dp"
         android:hint="@string/name"
-        android:text="MiniHeros"
         android:minHeight="48dp"
         />
 
@@ -73,10 +72,7 @@
         android:layout_marginHorizontal="32dp"
         android:layout_marginTop="16dp"
         android:hint="@string/email"
-        android:text="Matanel@gmail.com"
-
-        android:minHeight="48dp"
-        />
+        android:minHeight="48dp" />
 
     <LinearLayout
         android:id="@+id/welcome_CB_parent_or_child"

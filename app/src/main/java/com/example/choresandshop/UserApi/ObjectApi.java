@@ -4,8 +4,6 @@ import com.example.choresandshop.boundaries.ObjectBoundary;
 
 import retrofit2.Call;
 import retrofit2.http.Body;
-import retrofit2.http.Field;
-import retrofit2.http.FormUrlEncoded;
 import retrofit2.http.GET;
 import retrofit2.http.POST;
 import retrofit2.http.PUT;
@@ -22,15 +20,14 @@ public interface ObjectApi {
     Call<ObjectBoundary> createObject(@Body ObjectBoundary objectBoundary);
 
     // update object by id
-    @PUT("objects/{superapp}/{id}s")
-    void updateObject(
+    @PUT("objects/{superapp}/{id}/")
+    Call<Void> updateObject(
             @Path("superapp") String superapp,
             @Path("id") String id,
             @Query("userSuperapp") String userSuperapp,
             @Query("userEmail") String userEmail,
             @Body ObjectBoundary update
     );
-
 
     // find object by id
     @GET("objects/{superapp}/{id}")
@@ -39,7 +36,6 @@ public interface ObjectApi {
             @Path("email")String email,
             @Query("userSuperapp") String userSuperapp,
             @Query("userEmail") String userEmail
-
     );
 
     // find all objects
@@ -52,21 +48,21 @@ public interface ObjectApi {
     );
 
     // find objects by alias
-    @GET("objects/search/byType/{type}")
+    @GET("objects/superapp/objects/search/byType/{type}")
     Call<ObjectBoundary[]> getObjectsByType(
             @Path("type")String type,
             @Query("userSuperapp") String superapp,
-            @Query("userEmail") int email,
+            @Query("userEmail") String email,
             @Query("size") int size,
             @Query("page") int page
     );
 
     // find objects by alias
-    @GET("objects/search/byType/{alias}")
+    @GET("objects/search/byAlias/{alias}")
     Call<ObjectBoundary[]> findObjectsByAlias(
             @Path("alias")String alias,
             @Query("userSuperapp") String superapp,
-            @Query("userEmail") int email,
+            @Query("userEmail") String email,
             @Query("size") int size,
             @Query("page") int page
     );
@@ -76,7 +72,7 @@ public interface ObjectApi {
     Call<ObjectBoundary[]> findObjectByPattern(
             @Path("pattern")String pattern,
             @Query("userSuperapp") String superapp,
-            @Query("userEmail") int email,
+            @Query("userEmail") String email,
             @Query("size") int size,
             @Query("page") int page
     );
@@ -89,7 +85,7 @@ public interface ObjectApi {
             @Path("distance")int distance,
             @Query("units") String units,
             @Query("userSuperapp") String superapp,
-            @Query("userEmail") int email,
+            @Query("userEmail") String email,
             @Query("size") int size,
             @Query("page") int page
     );
@@ -102,7 +98,7 @@ public interface ObjectApi {
             @Path("distance")int distance,
             @Query("units") String units,
             @Query("userSuperapp") String superapp,
-            @Query("userEmail") int email,
+            @Query("userEmail") String email,
             @Query("size") int size,
             @Query("page") int page
     );

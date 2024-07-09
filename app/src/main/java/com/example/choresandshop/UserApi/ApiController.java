@@ -6,7 +6,8 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class ApiController {//implements Callback<ResponseBody> {
 
 //    private UserCallback userCallback;
-    private static final String BASE_URL = "https://9c4b-2a01-73c0-601-20be-81ba-d61e-583c-fcb9.ngrok-free.app/superapp/";
+    private static final String BASE_URL = "http://10.0.2.2:8084/superapp/";
+//        "http://10.0.2.2:8084/superapp/";
         // "http://172.20.10.13:8084/superapp/";
     private static Retrofit retrofit;
 

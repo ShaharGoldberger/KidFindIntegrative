@@ -26,6 +26,7 @@
             android:layout_below="@id/Text_TIL_InputName"
             android:layout_centerHorizontal="true"
             android:layout_marginTop="30dp"
+
             android:text="find kid"
             />
 
@@ -38,7 +39,6 @@
             android:layout_below="@+id/Find_MB_FindLocation"
             android:layout_alignParentBottom="true"
             android:layout_marginTop="20dp" />
-
 
     </RelativeLayout>
 

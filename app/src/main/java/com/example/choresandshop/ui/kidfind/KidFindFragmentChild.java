@@ -7,6 +7,7 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
+import android.os.Handler;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -38,6 +39,8 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 
+import java.util.Arrays;
+
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -51,6 +54,13 @@ public class KidFindFragmentChild extends Fragment implements OnMapReadyCallback
     private double latitude;
     private double longitude;
     private String email;
+    private Handler handler = new Handler();
+    private Runnable runnable;
+    private final int POLL_INTERVAL = 5000; // time in millis
+
+    private ObjectApi objectApi;
+    private CommandApi commandService;
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -62,9 +72,17 @@ public class KidFindFragmentChild extends Fragment implements OnMapReadyCallback
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_kid_find_child, container, false);
-        // Get reference to the Spinner
 
         findViews(view);
+        initViews(view);
+        startPolling();
+
+        return view;
+    }
+
+    private void initViews(View view) {
+        objectApi = ApiController.getRetrofitInstance().create(ObjectApi.class);
+        commandService = ApiController.getRetrofitInstance().create(CommandApi.class);
 
         Send_MB_SendAlert.setOnClickListener(v -> {
             zoom();
@@ -73,9 +91,33 @@ public class KidFindFragmentChild extends Fragment implements OnMapReadyCallback
 
         SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map_fragment);
         mapFragment.getMapAsync(this);
+    }
 
+    private void startPolling() {
+        ObjectBoundary locationObject = makeCurrentLocationBoundary();
+        locationObject.setType("GENERAL");
+        runnable = () -> objectApi.createObject(locationObject).enqueue(new Callback<ObjectBoundary>() {
+            @Override
+            public void onResponse(Call<ObjectBoundary> call, Response<ObjectBoundary> response) {
+                if (response.isSuccessful())
+                    Log.i("Response object: ", response.body().toString() );
 
-        return view;
+                else
+                    Log.e("Error", "Request failed with code: " + response.code());
+
+                handler.postDelayed(runnable, POLL_INTERVAL);
+            }
+            @Override
+            public void onFailure(Call<ObjectBoundary> call, Throwable t) {
+                Log.e("Failure", t.getMessage());
+                handler.postDelayed(runnable, POLL_INTERVAL);
+            }
+        });
+        handler.post(runnable);
+    }
+
+    private void stopPolling() {
+        handler.removeCallbacks(runnable);
     }
 
     private void zoom() {
@@ -98,26 +140,8 @@ public class KidFindFragmentChild extends Fragment implements OnMapReadyCallback
         this.googleMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
     }
 
-    private void testLocation(){
-
-        Toast.makeText(getContext(), "Alert test", Toast.LENGTH_SHORT).show();
-        // TODO : Send the kid email to miniapp KidFind and get location boundary
-        LatLng location = new LatLng(latitude, longitude);
-        googleMap.addMarker(new MarkerOptions().position(location).title("Marker in Sydney"));
-        googleMap.getUiSettings().setZoomControlsEnabled(true);
-
-        float zoomLevel = 10.0f; // zoom level
-        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, zoomLevel));
-
-    }
-
     private void sendAlert(){
-
-
         ObjectBoundary locationBoundary = makeCurrentLocationBoundary();
-
-
-        ObjectApi objectApi = ApiController.getRetrofitInstance().create(ObjectApi.class);
         Call<ObjectBoundary> createObjectCall = objectApi.createObject(locationBoundary);
         createObjectCall.enqueue(new Callback<ObjectBoundary>() {
             @Override
@@ -126,38 +150,39 @@ public class KidFindFragmentChild extends Fragment implements OnMapReadyCallback
                 if (response.isSuccessful()) {
                     // get the object in return
                     ObjectBoundary responseObject = response.body();
-                    Log.i("Response object: ", responseObject.toString() );
+                    Log.e("SuperappObjectBoundary", responseObject.toString() );
 
+                    // Send command to the API
                     // use the Id to make a command (for target object)
-                    MiniAppCommandBoundary command = makeCommandByObjectId(
-                            responseObject.getObjectId().getId()
-                    );
+                    sendAlertCommand(responseObject.getObjectId().getId());
 
-                    // make a call to create alert command with command boundary
-                    CommandApi apiService = ApiController.getRetrofitInstance().create(CommandApi.class);
-                    Call<MiniAppCommandBoundary[]> createCommandCal = apiService.create("MiniHeros", command);
-                    createCommandCal.enqueue(new Callback<MiniAppCommandBoundary[]>() {
-                        @Override
-                        public void onResponse(Call<MiniAppCommandBoundary[]> call, Response<MiniAppCommandBoundary[]> response) {
-                            if (response.isSuccessful()) {
-                                MiniAppCommandBoundary[] responseCommands = response.body();
-                                for (MiniAppCommandBoundary b : responseCommands) {
-                                    Log.i("All commands: ", b.toString() );
-                                }
-                            } else  Log.e("Error", "Request failed with code: " + response.code());
-                        }
-
-                        @Override
-                        public void onFailure(Call<MiniAppCommandBoundary[]> call, Throwable t) {
-                            Log.e("Failure", t.getMessage());
-                        }
-                    });
-                    Log.d("Response", "Request was successful");
                 } else Log.e("Error", "Request failed with code: " + response.code());
-
             }
             @Override
             public void onFailure(Call<ObjectBoundary> call, Throwable t) { Log.e("Failure", t.getMessage()); }
+        });
+    }
+
+    private void sendAlertCommand(String objectId) {
+        MiniAppCommandBoundary command = makeCommandByObjectId(objectId);
+
+        // make a call to create alert command with command boundary
+        Call<MiniAppCommandBoundary[]> createCommandCal = commandService.create("MiniHeros", command);
+        createCommandCal.enqueue(new Callback<MiniAppCommandBoundary[]>() {
+            @Override
+            public void onResponse(Call<MiniAppCommandBoundary[]> call, Response<MiniAppCommandBoundary[]> response) {
+                if (response.isSuccessful()) {
+                    Arrays.stream(response.body())
+                            .peek( (i) -> Log.e("MiniAppCommandBoundary", i.toString()));
+                } else {
+                    Log.e("Error", "Request failed with code: " + response.code());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<MiniAppCommandBoundary[]> call, Throwable t) {
+                Log.e("Failure", t.getMessage());
+            }
         });
     }
 
@@ -174,7 +199,7 @@ public class KidFindFragmentChild extends Fragment implements OnMapReadyCallback
 
     private ObjectBoundary makeCurrentLocationBoundary(){
         ObjectBoundary boundary = new ObjectBoundary();
-        boundary.setType("GENERAL");
+        boundary.setType("ALERT");
         boundary.setAlias("location");
         boundary.setLocation(new com.example.choresandshop.Model.Location(latitude, longitude));
         boundary.setActive(true);

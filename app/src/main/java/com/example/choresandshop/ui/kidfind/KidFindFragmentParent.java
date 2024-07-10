@@ -42,6 +42,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.material.button.MaterialButton;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import com.google.android.gms.maps.GoogleMap;
@@ -114,7 +115,7 @@ public class KidFindFragmentParent extends Fragment implements OnMapReadyCallbac
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 email = parent.getItemAtPosition(position).toString();
-                Toast.makeText(getActivity(), "Selected: " + email, Toast.LENGTH_SHORT).show();
+//                Toast.makeText(getActivity(), "Selected: " + email, Toast.LENGTH_SHORT).show();
             }
 
             @Override
@@ -129,15 +130,12 @@ public class KidFindFragmentParent extends Fragment implements OnMapReadyCallbac
 
         SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map_fragment);
         mapFragment.getMapAsync(this);
-
-
     }
 
     private void findViews(View view) {
         Find_MB_FindLocation = view.findViewById(R.id.Find_MB_FindLocation);
         spinner = view.findViewById(R.id.spinner);
     }
-
 
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
@@ -160,6 +158,7 @@ public class KidFindFragmentParent extends Fragment implements OnMapReadyCallbac
                 if (response.isSuccessful()){
                     // if any is active
                     ArrayList<ObjectBoundary> objects = new ArrayList<>(Arrays.asList(response.body()));
+                    if ( objects.size() == 0 ) return;
                     Log.e("Parent Objects", "Successful result" + objects.get(0));
 
                     for (ObjectBoundary object : objects) {
@@ -167,7 +166,7 @@ public class KidFindFragmentParent extends Fragment implements OnMapReadyCallbac
                         Log.e("Notification", "Send notification " + objects.get(0));
                         makeObjectNotActive(object);
                         showNotification("Emergency call from " + object.getCreatedBy().getUserId().getEmail());
-                        Toast.makeText(getActivity(), "Emergency call from " + object.getCreatedBy().getUserId().getEmail(), Toast.LENGTH_SHORT).show();
+//                        Toast.makeText(getActivity(), "Emergency call from " + object.getCreatedBy().getUserId().getEmail(), Toast.LENGTH_SHORT).show();
                         playSound(getContext());
                         vibrate();
                     }
@@ -208,7 +207,7 @@ public class KidFindFragmentParent extends Fragment implements OnMapReadyCallbac
 
             @Override
             public void onFailure(Call<Void> call, Throwable t) {
-                Toast.makeText(getContext(), "Finding test"+ t.getMessage(), Toast.LENGTH_SHORT).show();
+//                Toast.makeText(getContext(), "Finding test"+ t.getMessage(), Toast.LENGTH_SHORT).show();
 
                 Log.e("Update failed", t.getMessage());
             }
@@ -284,21 +283,30 @@ public class KidFindFragmentParent extends Fragment implements OnMapReadyCallbac
                     try {
                         ObjectBoundary[] responseAllBody = response.body();
                         // Log or display the response
-                        ObjectBoundary responseBody = responseAllBody[0];
-                        LatLng location = new LatLng(responseBody.getLocation().getLat(), responseBody.getLocation().getLng());
+                        ObjectBoundary latest = null;
+                        Log.e("Email looking for", email);
+                        for (ObjectBoundary object: responseAllBody){
+                            Log.e("Object looking for", object.toString());
+                            if ( !object.getCreatedBy().getUserId().getEmail().toLowerCase().equals(email.toLowerCase())) continue;
+                            if (latest == null)latest = object;
+                            else if (object.getCreationTimestamp().after(latest.getCreationTimestamp()))
+                                latest = object;
+                        }
+
+                        LatLng location = new LatLng(latest.getLocation().getLat(), latest.getLocation().getLng());
                         googleMap.addMarker(new MarkerOptions().position(location).title(email.toLowerCase()));
                         googleMap.getUiSettings().setZoomControlsEnabled(true);
 
                         float zoomLevel = 10.0f; // Example zoom level
                         googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, zoomLevel));
 
-                        Toast.makeText(getContext(), "LoginResponse "+responseBody.toString(), Toast.LENGTH_SHORT).show();
-                        Log.d("LoginResponse", responseBody.toString());
+//                        Toast.makeText(getContext(), "LoginResponse "+latest.toString(), Toast.LENGTH_SHORT).show();
+                        Log.d("LoginResponse", latest.toString());
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
                 } else {
-                    Toast.makeText(getContext(), "Finding test"+response.code(), Toast.LENGTH_SHORT).show();
+//                    Toast.makeText(getContext(), "Finding test"+response.code(), Toast.LENGTH_SHORT).show();
                     Log.e("LoginError", "Request failed with code: " + response.code());
                 }
             }

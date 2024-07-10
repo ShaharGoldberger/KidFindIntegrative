@@ -101,7 +101,6 @@ public class KidFindFragmentChild extends Fragment implements OnMapReadyCallback
             public void onResponse(Call<ObjectBoundary> call, Response<ObjectBoundary> response) {
                 if (response.isSuccessful())
                     Log.i("Response object: ", response.body().toString() );
-
                 else
                     Log.e("Error", "Request failed with code: " + response.code());
 
@@ -201,7 +200,10 @@ public class KidFindFragmentChild extends Fragment implements OnMapReadyCallback
         ObjectBoundary boundary = new ObjectBoundary();
         boundary.setType("ALERT");
         boundary.setAlias("location");
-        boundary.setLocation(new com.example.choresandshop.Model.Location(latitude, longitude));
+        boundary.setLocation(new com.example.choresandshop.Model.Location(
+                CurrentLocationManager.getInstance().getLatitude()
+                ,CurrentLocationManager.getInstance().getLongitude()
+                ));
         boundary.setActive(true);
         boundary.setCreatedBy(new CreatedBy(new UserId("MiniHeros", CurrentUserManager.getInstance().getUser().getUserId().getEmail())));
 

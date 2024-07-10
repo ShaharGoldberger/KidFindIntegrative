@@ -80,7 +80,7 @@ public class WelcomeActivity extends AppCompatActivity {
                 User user = response.body();
 
                 if (response.isSuccessful()  && user != null) {
-                    Toast.makeText(WelcomeActivity.this, "Hello " + user.getUsername().toString(), Toast.LENGTH_LONG).show();
+//                    Toast.makeText(WelcomeActivity.this, "Hello " + user.getUsername().toString(), Toast.LENGTH_LONG).show();
                     SwitchToGameIntent(user);
 
                 } else {
@@ -92,7 +92,7 @@ public class WelcomeActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Call<User> call, Throwable t) {
-                Log.e("Retrofit", "Network error or failure: " + t.getMessage());
+//                Log.e("Retrofit", "Network error or failure: " + t.getMessage());
                 Toast.makeText(WelcomeActivity.this, "SHIT HAPPENS ", Toast.LENGTH_LONG).show();
 
             }

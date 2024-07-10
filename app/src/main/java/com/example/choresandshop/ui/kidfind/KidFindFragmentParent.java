@@ -160,13 +160,16 @@ public class KidFindFragmentParent extends Fragment implements OnMapReadyCallbac
                     ArrayList<ObjectBoundary> objects = new ArrayList<>(Arrays.asList(response.body()));
                     if ( objects.size() == 0 ) return;
                     Log.e("Parent Objects", "Successful result" + objects.get(0));
-
+                    boolean hasNotifications = false;
                     for (ObjectBoundary object : objects) {
                         if (!object.getActive()) continue;
                         Log.e("Notification", "Send notification " + objects.get(0));
                         makeObjectNotActive(object);
+                        hasNotifications = true;
                         showNotification("Emergency call from " + object.getCreatedBy().getUserId().getEmail());
 //                        Toast.makeText(getActivity(), "Emergency call from " + object.getCreatedBy().getUserId().getEmail(), Toast.LENGTH_SHORT).show();
+                    }
+                    if ( hasNotifications ){
                         playSound(getContext());
                         vibrate();
                     }

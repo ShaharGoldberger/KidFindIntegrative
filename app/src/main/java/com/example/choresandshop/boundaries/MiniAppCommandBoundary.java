@@ -1,12 +1,11 @@
 package com.example.choresandshop.boundaries;
 
+import com.example.choresandshop.Model.CommandId;
 import com.example.choresandshop.Model.InvokedBy;
 import com.example.choresandshop.Model.TargetObject;
 
 import java.util.Date;
 import java.util.Map;
-
-import app.utilities.CommandId;
 
 public class MiniAppCommandBoundary {
 

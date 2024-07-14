@@ -1,26 +1,15 @@
 package com.example.choresandshop.ui.kidfind;
 
-import static androidx.core.content.ContextCompat.getSystemService;
-
-import android.app.Activity;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
-import android.content.pm.PackageManager;
-import android.location.Location;
 import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Bundle;
-
-import androidx.annotation.NonNull;
-import androidx.core.app.ActivityCompat;
-import androidx.core.app.NotificationCompat;
-import androidx.core.content.ContextCompat;
-import androidx.fragment.app.Fragment;
-
 import android.os.Handler;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,34 +18,35 @@ import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.core.app.NotificationCompat;
+import androidx.fragment.app.Fragment;
+
+import com.example.choresandshop.CurrentUserManager;
 import com.example.choresandshop.Model.CreatedBy;
 import com.example.choresandshop.Model.UserId;
 import com.example.choresandshop.R;
 import com.example.choresandshop.UserApi.ApiController;
 import com.example.choresandshop.UserApi.ObjectApi;
 import com.example.choresandshop.boundaries.ObjectBoundary;
-import com.example.choresandshop.ui.CurrentUserManager;
+import com.example.choresandshop.ui.CurrentLocationManager;
 import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.material.button.MaterialButton;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.material.button.MaterialButton;
 
-import android.util.Log;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
-import retrofit2.http.Body;
-import retrofit2.http.Path;
-import retrofit2.http.Query;
 
 public class KidFindFragmentParent extends Fragment implements OnMapReadyCallback{
 
@@ -99,8 +89,7 @@ public class KidFindFragmentParent extends Fragment implements OnMapReadyCallbac
     private void initViews(View view) {
         // Create a list of items
         List<String> kidsNames = new ArrayList<>();
-        kidsNames.add("Shahar@gmail.com");
-        kidsNames.add("Matanel@gmail.com");
+        kidsNames.add("Pick a child account");
         // Add more items as needed
 
         // Create an ArrayAdapter using the list of items and a default spinner layout
@@ -130,6 +119,38 @@ public class KidFindFragmentParent extends Fragment implements OnMapReadyCallbac
 
         SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map_fragment);
         mapFragment.getMapAsync(this);
+
+        objectApi.findAllObjects("MiniHeros"
+                        , CurrentUserManager.getInstance().getUser().getUserId().getEmail()
+                        , 10, 0)
+                .enqueue(new Callback<ObjectBoundary[]>() {
+                    @Override
+                    public void onResponse(Call<ObjectBoundary[]> call, Response<ObjectBoundary[]> response) {
+                        if (response.isSuccessful()){
+                            // if any is active
+                            Set<String> kidsNames = new HashSet<>();
+
+
+                            ArrayList<ObjectBoundary> objects = new ArrayList<>(Arrays.asList(response.body()));
+
+                            Log.e("Parent Objects", "Successful result" + objects.get(0));
+                            for (ObjectBoundary object : objects) {
+                                if ( object.getAlias().equals("location")){
+                                    kidsNames.add(object.getCreatedBy().getUserId().getEmail());
+                                }
+                            }
+
+                            initSpinner(kidsNames);
+                        }
+                        else
+                            Log.e("Error", "Request failed with code: " + response.code());
+                    }
+                    @Override
+                    public void onFailure(Call<ObjectBoundary[]> call, Throwable t) {
+                        Log.e("Failure", t.getMessage());
+                    }
+                });
+
     }
 
     private void findViews(View view) {
@@ -137,20 +158,40 @@ public class KidFindFragmentParent extends Fragment implements OnMapReadyCallbac
         spinner = view.findViewById(R.id.spinner);
     }
 
+    public void initSpinner(Set<String> emails){
+
+        if (emails.isEmpty()){
+            ArrayList<String> empty = new ArrayList<>();
+            empty.add("There are no childs");
+            ArrayAdapter<String> adapter = new ArrayAdapter<>(getContext(), R.layout.custom_spinner_item, empty);
+            adapter.setDropDownViewResource(R.layout.custom_spinner_dropdown_item);
+            spinner.setAdapter(adapter);
+
+
+        }else{
+            ArrayList<String> newEmails = new ArrayList<>();
+            newEmails.add("Pick a child account");
+            newEmails.addAll(emails);
+            ArrayAdapter<String> adapter = new ArrayAdapter<>(getContext(), R.layout.custom_spinner_item, newEmails);
+            adapter.setDropDownViewResource(R.layout.custom_spinner_dropdown_item);
+            spinner.setAdapter(adapter);
+
+        }
+
+
+    }
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
         this.googleMap = googleMap;
 
-        LatLng sydney = new LatLng(-34, 151);
-        this.googleMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        this.googleMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+        zoom();
     }
 
     private void startPolling() {
 
         runnable = () -> objectApi.getObjectsByType("ALERT",
                 "MiniHeros",
-                "Yakir@gmail.com",
+                CurrentUserManager.getInstance().getUser().getUserId().getEmail(),
                 10,
                 0).enqueue(new Callback<ObjectBoundary[]>() {
             @Override
@@ -277,7 +318,7 @@ public class KidFindFragmentParent extends Fragment implements OnMapReadyCallbac
 
 
     private void findKidLocation(){
-
+        if (!email.contains("@")) return;
         Call<ObjectBoundary[]> call = objectApi.findAllObjects("MiniHeros", email.toLowerCase(), 20, 0);
         call.enqueue(new Callback<ObjectBoundary[]>() {
             @Override
@@ -295,7 +336,7 @@ public class KidFindFragmentParent extends Fragment implements OnMapReadyCallbac
                             else if (object.getCreationTimestamp().after(latest.getCreationTimestamp()))
                                 latest = object;
                         }
-
+                        if ( latest == null ) return;
                         LatLng location = new LatLng(latest.getLocation().getLat(), latest.getLocation().getLng());
                         googleMap.addMarker(new MarkerOptions().position(location).title(email.toLowerCase()));
                         googleMap.getUiSettings().setZoomControlsEnabled(true);
@@ -364,6 +405,13 @@ public class KidFindFragmentParent extends Fragment implements OnMapReadyCallbac
         }
 
 
+    }
+
+    private void zoom() {
+        latitude = CurrentLocationManager.getInstance().getLatitude();
+        longitude = CurrentLocationManager.getInstance().getLongitude();
+
+        this.googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(latitude, longitude), 10.0F));
     }
 
 }

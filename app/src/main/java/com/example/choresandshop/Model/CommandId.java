@@ -1,4 +1,4 @@
-package app.utilities;
+package com.example.choresandshop.Model;
 
 public class CommandId {
 	

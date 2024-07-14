@@ -3,8 +3,4 @@
     <domain-config cleartextTrafficPermitted="true">
         <domain includeSubdomains="true">172.20.10.13</domain> <!-- Replace with your actual IP address -->
     </domain-config>
-    <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="true">10.0.2.2</domain>
-    </domain-config>
-
 </network-security-config>

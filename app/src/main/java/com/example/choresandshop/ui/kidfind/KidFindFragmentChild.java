@@ -1,12 +1,6 @@
 package com.example.choresandshop.ui.kidfind;
 
-import android.annotation.SuppressLint;
-import android.location.Location;
 import android.os.Bundle;
-
-import androidx.annotation.NonNull;
-import androidx.fragment.app.Fragment;
-
 import android.os.Handler;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -14,6 +8,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
+
+import com.example.choresandshop.CurrentUserManager;
 import com.example.choresandshop.Model.CreatedBy;
 import com.example.choresandshop.Model.InvokedBy;
 import com.example.choresandshop.Model.ObjectId;
@@ -26,18 +24,15 @@ import com.example.choresandshop.UserApi.ObjectApi;
 import com.example.choresandshop.boundaries.MiniAppCommandBoundary;
 import com.example.choresandshop.boundaries.ObjectBoundary;
 import com.example.choresandshop.ui.CurrentLocationManager;
-import com.example.choresandshop.ui.CurrentUserManager;
+import com.example.choresandshop.ui.WelcomeActivity;
 import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.material.button.MaterialButton;
-
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.material.button.MaterialButton;
 
 import java.util.Arrays;
 
@@ -87,10 +82,12 @@ public class KidFindFragmentChild extends Fragment implements OnMapReadyCallback
         Send_MB_SendAlert.setOnClickListener(v -> {
             zoom();
             sendAlert();
+
         });
 
         SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map_fragment);
         mapFragment.getMapAsync(this);
+
     }
 
     private void startPolling() {
@@ -134,9 +131,7 @@ public class KidFindFragmentChild extends Fragment implements OnMapReadyCallback
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
         this.googleMap = googleMap;
-        LatLng sydney = new LatLng(-34, 151);
-        this.googleMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        this.googleMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+        zoom();
     }
 
     private void sendAlert(){
@@ -154,6 +149,8 @@ public class KidFindFragmentChild extends Fragment implements OnMapReadyCallback
                     // Send command to the API
                     // use the Id to make a command (for target object)
                     sendAlertCommand(responseObject.getObjectId().getId());
+
+
 
                 } else Log.e("Error", "Request failed with code: " + response.code());
             }
@@ -173,6 +170,7 @@ public class KidFindFragmentChild extends Fragment implements OnMapReadyCallback
                 if (response.isSuccessful()) {
                     Arrays.stream(response.body())
                             .peek( (i) -> Log.e("MiniAppCommandBoundary", i.toString()));
+//                    Toast.makeText(getContext(), "Successfully sent alert", Toast.LENGTH_SHORT).show();
                 } else {
                     Log.e("Error", "Request failed with code: " + response.code());
                 }

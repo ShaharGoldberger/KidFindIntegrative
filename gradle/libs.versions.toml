@@ -34,6 +34,7 @@ converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref
 gms-location = { module = "com.google.android.gms:play-services-location", version.ref = "gms-location" }
 gms-maps = { module = "com.google.android.gms:play-services-maps", version.ref = "gms-maps" }
 
+
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 

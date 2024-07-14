@@ -5,10 +5,9 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.AddChoreActivity">
-
+    tools:context=".ui.AddPrizeActivity">
     <com.google.android.material.textview.MaterialTextView
-        android:id="@+id/add_chore_LBL_enter_name"
+        android:id="@+id/add_prize_LBL_enter_name"
         android:layout_width="match_parent"
         android:layout_marginHorizontal="128dp"
         android:layout_marginTop="64dp"
@@ -22,10 +21,10 @@
         />
 
     <androidx.appcompat.widget.AppCompatEditText
-        android:id="@+id/add_chore_EDT_name"
+        android:id="@+id/add_prize_EDT_name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/add_chore_LBL_enter_name"
+        android:layout_below="@+id/add_prize_LBL_enter_name"
         android:layout_centerHorizontal="true"
         android:layout_marginHorizontal="32dp"
         android:layout_marginTop="16dp"
@@ -34,7 +33,7 @@
         />
 
     <com.google.android.material.textview.MaterialTextView
-        android:id="@+id/add_chore_LBL_enter_price"
+        android:id="@+id/add_prize_LBL_enter_price"
         android:layout_width="match_parent"
         android:layout_marginHorizontal="128dp"
         android:layout_marginTop="64dp"
@@ -44,15 +43,15 @@
         android:autoSizeTextType="uniform"
         android:maxLines="1"
         android:textColor="@color/primary_color"
-        android:layout_below="@+id/add_chore_EDT_name"
+        android:layout_below="@+id/add_prize_EDT_name"
         android:text="@string/enter_price"
         />
 
     <androidx.appcompat.widget.AppCompatEditText
-        android:id="@+id/add_chore_EDT_price"
+        android:id="@+id/add_prize_EDT_price"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/add_chore_LBL_enter_price"
+        android:layout_below="@+id/add_prize_LBL_enter_price"
         android:layout_centerHorizontal="true"
         android:layout_marginHorizontal="32dp"
         android:layout_marginTop="16dp"
@@ -61,7 +60,7 @@
         />
 
     <com.google.android.material.button.MaterialButton
-        android:id="@+id/add_chore_BTN_create"
+        android:id="@+id/add_prize_BTN_create"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"

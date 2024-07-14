@@ -44,15 +44,16 @@ dependencies {
     implementation(libs.navigation.fragment)
     implementation(libs.navigation.ui)
     implementation(libs.activity)
-    implementation(libs.gms.location)
-    implementation(libs.gms.maps)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
-
+    implementation(libs.gms.location)
+    implementation(libs.gms.maps)
     implementation(libs.glide)
 
     // Rest API calls
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
+
+
 }

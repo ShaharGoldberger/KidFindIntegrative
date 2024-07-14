@@ -1,19 +1,17 @@
 package com.example.choresandshop.ui.kidfind;
 
 import android.os.Bundle;
-
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentTransaction;
-
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.example.choresandshop.R;
-import com.example.choresandshop.ui.CurrentUserManager;
-import com.google.android.material.button.MaterialButton;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
 
+import com.example.choresandshop.CurrentUserManager;
+import com.example.choresandshop.R;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.material.button.MaterialButton;
 
 public class KidFindFragment extends Fragment {
 

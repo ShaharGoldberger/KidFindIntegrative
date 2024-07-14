@@ -1,5 +1,8 @@
 package com.example.choresandshop.UserApi;
 
+import com.example.choresandshop.Model.NewUser;
+import com.example.choresandshop.Model.Object;
+import com.example.choresandshop.Model.User;
 import com.example.choresandshop.boundaries.ObjectBoundary;
 
 import retrofit2.Call;
@@ -11,16 +14,33 @@ import retrofit2.http.Path;
 import retrofit2.http.Query;
 
 public interface ObjectApi {
-    // start = {"/superapp/objects"}
-    // superapp is from the apicontroller, object added here every endpoint
+    @POST("objects")
+    Call<Object> createObject(@Body Object object);
 
+//    @GET("objects/search/byType/{type}")
+//    Call<Object[]> getAllChores(
+//            @Path("type") String type,
+//            @Query("userSuperapp") String userSuperapp,
+//            @Query("userEmail") String userEmail,
+//            @Query("size") int size,
+//            @Query("page") int page
+//    );
+
+    @GET("objects/search/byAliasPattern/{pattern}")
+    Call<Object[]> getChores(
+            @Path("pattern") String pattern,
+            @Query("userSuperapp") String userSuperapp,
+            @Query("userEmail") String userEmail,
+            @Query("size") int size,
+            @Query("page") int page
+    );
 
     // create object
     @POST("objects")
     Call<ObjectBoundary> createObject(@Body ObjectBoundary objectBoundary);
 
     // update object by id
-    @PUT("objects/{superapp}/{id}/")
+    @PUT("objects/{superapp}/{id}")
     Call<Void> updateObject(
             @Path("superapp") String superapp,
             @Path("id") String id,
@@ -103,4 +123,20 @@ public interface ObjectApi {
             @Query("page") int page
     );
 
+    @GET("objects/{superapp}/{id}")
+    Call<Object> getObject(
+        @Path("superapp") String superapp,
+        @Path("id") String id,
+        @Query("userSuperapp") String userSuperapp,
+        @Query("userEmail") String userEmail
+    );
+
+    @PUT("objects/{superapp}/{id}")
+    Call<Void> updateObject(
+            @Path("superapp") String superapp,
+            @Path("id") String id,
+            @Query("userSuperapp") String userSuperapp,
+            @Query("userEmail") String userEmail,
+            @Body Object object
+    );
 }

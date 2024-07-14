@@ -1,26 +1,25 @@
 package com.example.choresandshop.Model;
 
 public class CreatedBy {
-	private UserId userId;
+    private UserId userId;
 
-	public CreatedBy() {
-	}
+    public CreatedBy() {
+    }
 
-	public CreatedBy(UserId userId) {
-		this.userId = userId;
-	}
+    public CreatedBy(UserId userId) {
+        this.userId = userId;
+    }
 
-	public UserId getUserId() {
-		return userId;
-	}
+    public UserId getUserId() {
+        return userId;
+    }
 
-	public void setUserId(UserId userId) {
-		this.userId = userId;
-	}
+    public void setUserId(UserId userId) {
+        this.userId = userId;
+    }
 
-	@Override
-	public String toString() {
-		return "CreatedByBoundary [userId=" + userId + "]";
-	}
-
+    @Override
+    public String toString() {
+        return "CreatedByBoundary [userId=" + userId + "]";
+    }
 }

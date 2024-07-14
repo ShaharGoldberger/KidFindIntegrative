@@ -1,7 +1,5 @@
 package com.example.choresandshop.Model;
 
-import com.example.choresandshop.Model.UserId;
-
 public class InvokedBy {
 	private UserId userId;
 

@@ -59,10 +59,6 @@ Before running the application, ensure you have the following prerequisites inst
 
 - Kids have a button on the map screen to send an alert to their parents.
 
-## API and Endpoints
-
-**Note**: API documentation is managed separately.
-
 ## Technology Stack
 
 - Java
@@ -70,23 +66,3 @@ Before running the application, ensure you have the following prerequisites inst
 - H2 Database
 - Swagger UI
 - Google Maps
-
-## Architecture
-
-**Note**: Detailed architecture documentation is managed separately.
-
-## Contributing
-
-**Note**: Contribution guidelines are managed separately.
-
-## Support and Issues
-
-**Note**: Support and issue reporting information are managed separately.
-
-## License
-
-**Note**: Licensing information is managed separately.
-
-## Acknowledgements
-
-**Note**: Acknowledgements are managed separately.
